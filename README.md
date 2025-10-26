@@ -1,67 +1,96 @@
-# Badge Studio (2024)
+# Bly (2025)
 
-Современная версия оффлайн‑генератора бейджей для конференций и мероприятий. Приложение полностью работает в браузере без серверной части: данные и пользовательские шаблоны сохраняются в `localStorage`, поэтому достаточно открыть `index.html` в любимом браузере.
+A modern offline badge generator for conferences and events — built to run entirely **in your browser**.  
+No servers, no dependencies: all data and custom templates are stored in `localStorage`, so you can simply open `index.html` and start designing.
 
-## Возможности
+## Features
 
-- Импорт участников из JSON и быстрый поиск по списку.
-- Редактирование, дублирование, массовое удаление и выделение участников.
-- Настраиваемые размеры страницы и бейджей, автоматический расчёт сетки под печать.
-- Несколько встроенных шаблонов + визуальный редактор для создания своих (HTML/CSS + список полей).
-- Экспорт участников обратно в JSON, общий сброс настроек и шаблонов.
-- Готовность к печати: `@media print` скрывает интерфейс и показывает только страницы с бейджами.
+- Import participants from JSON and search instantly.  
+- Edit, duplicate, bulk-delete, or highlight attendees.  
+- Fully customizable page and badge sizes with automatic print grid calculation.  
+- Multiple built-in templates + visual editor for creating your own (HTML/CSS + field mapping).  
+- Export participants back to JSON or reset all settings/templates in one click.  
+- Print-ready: `@media print` hides the UI and displays only badge pages.
 
-## Структура
+## Project Structure
 
 ```
-index.html                 — основной интерфейс
-assets/css/main.css        — глобальные стили и стили диалогов/панелей
-assets/js/                 — логика приложения (ES-модули)
-  ├─ main.js               — точка входа и работа с DOM
-  ├─ state.js              — хранение и события приложения
-  ├─ storage.js            — namespaced localStorage
-  ├─ template-manager.js   — встроенные и пользовательские шаблоны
-  └─ utils.js              — утилиты (рендеринг, функции преобразования)
-templates/                 — встроенные шаблоны (markup + style)
-old_dist/                  — архив предыдущей версии приложения
+index.html                 — main interface
+assets/css/main.css        — global styles and layout for dialogs/panels
+assets/js/                 — app logic (ES modules)
+  ├─ main.js               — entry point and DOM operations
+  ├─ state.js              — state management and events
+  ├─ storage.js            — namespaced localStorage wrapper
+  ├─ template-manager.js   — built-in and user-defined templates
+  └─ utils.js              — rendering and helper functions
+templates/                 — built-in template markup + styles
+old_dist/                  — archived previous version
 ```
 
-## Как пользоваться
+## Getting Started
 
-1. Откройте `index.html` локально или через статичный хостинг.
-2. Выберите шаблон — предпросмотр обновится автоматически.
-3. Импортируйте список участников в JSON или добавьте людей вручную.
-4. При необходимости поправьте размеры страницы, ориентацию и отступы.
-5. Нажмите «Печать» — сработает стандартное диалоговое окно печати вашего браузера.
+1. Open `index.html` locally or via any static hosting.  
+2. Choose a template — the preview updates automatically.  
+3. Import a participant list in JSON or add people manually.  
+4. Adjust page size, orientation, and margins as needed.  
+5. Click **Print** — your browser’s print dialog will handle the rest.
 
-### Формат JSON для импорта
+### JSON Import Format
 
-Массив объектов, где ключи соответствуют полям выбранного шаблона:
+Use an array of objects where keys match template fields:
 
 ```json
 [
-  { "name": "Александр Иванов", "company": "РБК", "role": "Спикер" },
-  { "name": "Екатерина Смирнова", "company": "Яндекс", "role": "Участник" }
+  { "name": "Alexander Ivanov", "company": "RBC", "role": "Speaker" },
+  { "name": "Ekaterina Smirnova", "company": "Yandex", "role": "Attendee" }
 ]
 ```
 
-## Работа с пользовательскими шаблонами
+## Custom Templates
 
-Кнопка «Настроить шаблон» открывает диалог, где можно:
+The **Customize Template** dialog lets you:
 
-- изменить название, описание и размеры бейджа;
-- отредактировать список полей (id → `{{id}}` внутри разметки);
-- править разметку (HTML) и стили (CSS) прямо в браузере.
+- Edit the name, description, and badge dimensions.  
+- Modify available fields (`id` → `{{id}}` in markup).  
+- Directly edit HTML and CSS in the browser.  
 
-Сохранённые шаблоны помечаются точкой `•` в выпадающем списке. Их можно редактировать или удалить.
+Saved templates are marked with a `•` in the dropdown list — you can edit or delete them anytime.
 
-## Сброс и резервирование
+## Reset & Backup
 
-- «Сбросить настройки» — возвращает размеры и ориентацию страницы к значениям по умолчанию.
-- «Очистить список» — удаляет всех участников (шаблоны остаются).
-- «Сбросить всё» — очищает `localStorage`, удаляя участников, настройки и пользовательские шаблоны.
-- Историческая версия приложения доступна в `old_dist/`.
+- **Reset Settings** — restores page layout defaults.  
+- **Clear List** — removes all participants (keeps templates).  
+- **Reset All** — clears `localStorage` completely, removing participants, settings, and templates.  
+- The previous release is available in `old_dist/`.
 
-## Браузеры
+## Browser Support
 
-Проект использует современные веб‑API (ES Modules, `<dialog>`, Flex/Grid). Для наилучшей совместимости используйте актуальные версии Chrome, Edge, Firefox или Safari.
+Bly uses modern web APIs (`ES Modules`, `<dialog>`, Flexbox, Grid`).  
+For the best experience, use the latest versions of **Chrome**, **Edge**, **Firefox**, or **Safari**.
+
+## Contributing
+
+Contributions are welcome!  
+If you find a bug, want to suggest a feature, or improve the UI/UX, feel free to open an issue or a pull request on GitHub.
+
+**Recommended setup:**
+- Works without a server and in offline mode
+- Keep commits clean and descriptive.
+- Follow existing code style (ES modules, modern JS).
+
+## Roadmap
+
+- [ ] Add QR code and image field support  
+- [ ] Expand built-in template library  
+- [ ] Add drag-and-drop participant import  
+- [ ] Enable theme customization  
+- [ ] Create PWA version with offline caching  
+
+## License
+
+Licensed under the **MIT License**.  
+© 2025 Bly contributors.
+
+---
+
+🧩 **Bly — generate and print smart badges directly from JSON, no backend required.**
