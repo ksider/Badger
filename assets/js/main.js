@@ -13,6 +13,7 @@ const {
     createId,
     debounce,
 } = global.BadgeUtils;
+const CodeEditorAPI = global.BadgeCodeEditor || {};
 
 const PAGE_SIZES = {
     A4: {width: 210, height: 297},
@@ -89,6 +90,8 @@ let searchTerm = '';
 let templateDialogMode = 'create';
 let editingTemplateId = null;
 let editingTemplateFields = [];
+let markupCodeEditor = null;
+let stylesCodeEditor = null;
 
 bootstrap();
 
@@ -103,6 +106,7 @@ async function bootstrap() {
 
 function initialize() {
     setupEventListeners();
+    initializeCodeEditors();
     renderSizePresets();
     populateTemplateSelect();
     ensureInitialTemplate().then(() => {
@@ -111,6 +115,18 @@ function initialize() {
         renderPreview();
         updatePreviewInfo();
     });
+}
+
+function initializeCodeEditors() {
+    if (typeof CodeEditorAPI.attach !== 'function') {
+        return;
+    }
+    if (elements.templateMarkup) {
+        markupCodeEditor = CodeEditorAPI.attach(elements.templateMarkup);
+    }
+    if (elements.templateStyles) {
+        stylesCodeEditor = CodeEditorAPI.attach(elements.templateStyles);
+    }
 }
 
 function setupEventListeners() {
@@ -1136,8 +1152,18 @@ function openTemplateDialog() {
     elements.templateEditorTitle.textContent = isCustom ? 'Редактирование шаблона' : 'Новый шаблон на основе выбранного';
     elements.templateName.value = isCustom ? currentTemplate.name : `${currentTemplate.name} (копия)`;
     elements.templateDescriptionInput.value = currentTemplate.description || '';
-    elements.templateMarkup.value = currentTemplate.markup || '';
-    elements.templateStyles.value = currentTemplate.styles || '';
+    const markupValue = currentTemplate.markup || '';
+    const stylesValue = currentTemplate.styles || '';
+    if (markupCodeEditor) {
+        markupCodeEditor.setValue(markupValue);
+    } else {
+        elements.templateMarkup.value = markupValue;
+    }
+    if (stylesCodeEditor) {
+        stylesCodeEditor.setValue(stylesValue);
+    } else {
+        elements.templateStyles.value = stylesValue;
+    }
     elements.templateBadgeWidth.value = currentTemplate.badgeSize?.width ?? 90;
     elements.templateBadgeHeight.value = currentTemplate.badgeSize?.height ?? 55;
     editingTemplateFields = deepClone(currentTemplate.fields || []);
@@ -1148,6 +1174,16 @@ function openTemplateDialog() {
     }
     renderTemplateFields();
     elements.deleteTemplateButton.style.display = isCustom ? 'inline-flex' : 'none';
+    if (markupCodeEditor) {
+        requestAnimationFrame(() => {
+            markupCodeEditor.refresh();
+        });
+    }
+    if (stylesCodeEditor) {
+        requestAnimationFrame(() => {
+            stylesCodeEditor.refresh();
+        });
+    }
     elements.templateEditorDialog.showModal();
 }
 
@@ -1159,6 +1195,15 @@ function renderTemplateFields() {
         fragment.appendChild(createTemplateFieldRow(field, index));
     });
     container.appendChild(fragment);
+    syncMarkupPlaceholders();
+}
+
+function syncMarkupPlaceholders() {
+    if (!markupCodeEditor) {
+        return;
+    }
+    const placeholders = editingTemplateFields.map((field) => field.id).filter((id) => Boolean(id));
+    markupCodeEditor.setPlaceholders(placeholders);
 }
 
 function createTemplateFieldRow(field, index) {
@@ -1217,6 +1262,7 @@ function handleTemplateFieldChange(event) {
     } else if (key === 'label') {
         field.label = event.target.value;
     }
+    syncMarkupPlaceholders();
 }
 
 function handleTemplateFieldClick(event) {
