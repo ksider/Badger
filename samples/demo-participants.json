@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Александр Иванов",
+    "role": "Организатор",
+    "company": "Badge Studio",
+    "tagline": "Main Stage"
+  },
+  {
+    "name": "Мария Смирнова",
+    "role": "Спикер",
+    "company": "DesignLab",
+    "tagline": "UX Trends"
+  },
+  {
+    "name": "Игорь Соколов",
+    "role": "Участник",
+    "company": "DevCore",
+    "tagline": "Backend"
+  },
+  {
+    "name": "Екатерина Лебедева",
+    "role": "Модератор",
+    "company": "EventFlow",
+    "tagline": "Panel 2"
+  },
+  {
+    "name": "Дмитрий Петров",
+    "role": "Гость",
+    "company": "Freelance",
+    "tagline": "Networking"
+  }
+]
