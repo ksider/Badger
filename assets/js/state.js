@@ -99,13 +99,14 @@
             this.dispatchEvent(new CustomEvent(type, {detail}));
         }
 
-        setTemplate(id) {
-            if (this.templateId === id) {
-                return;
-            }
-            this.templateId = id;
-            this._persistTemplate();
-            this._emit('template', {id});
+    setTemplate(id, options = {}) {
+        const force = Boolean(options.force);
+        if (!force && this.templateId === id) {
+            return;
+        }
+        this.templateId = id;
+        this._persistTemplate();
+        this._emit('template', {id});
         }
 
         setSettings(patch) {

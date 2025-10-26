@@ -34,6 +34,7 @@ const state = new AppState(store);
 const elements = {
     templateSelect: document.getElementById('templateSelect'),
     templateDescription: document.getElementById('templateDescription'),
+    templateSample: document.getElementById('templateSample'),
     customizeTemplateButton: document.getElementById('customizeTemplateButton'),
     printButton: document.getElementById('printButton'),
     exportButton: document.getElementById('exportButton'),
@@ -117,6 +118,7 @@ function setupEventListeners() {
         renderParticipants();
         renderPreview();
         updatePreviewInfo();
+        updateTemplateSample(currentTemplate);
     });
 
     state.addEventListener('selection', () => {
@@ -167,6 +169,10 @@ function setupEventListeners() {
 
     elements.importForm?.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (event.submitter && event.submitter.value === 'cancel') {
+            elements.importDialog.close('cancel');
+            return;
+        }
         importParticipants();
     });
 
@@ -198,6 +204,10 @@ function setupEventListeners() {
 
     elements.participantForm?.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (event.submitter && event.submitter.value === 'cancel') {
+            elements.participantDialog.close('cancel');
+            return;
+        }
         submitParticipantForm();
     });
 
@@ -212,6 +222,10 @@ function setupEventListeners() {
 
     elements.templateEditorForm?.addEventListener('submit', (event) => {
         event.preventDefault();
+        if (event.submitter && event.submitter.value === 'cancel') {
+            elements.templateEditorDialog.close('cancel');
+            return;
+        }
         submitTemplateForm();
     });
 
@@ -469,6 +483,7 @@ async function ensureInitialTemplate() {
         currentTemplate = null;
         elements.templateDescription.textContent = 'Добавьте новый шаблон, чтобы начать работу.';
         elements.activeTemplateStyle.textContent = '';
+        updateTemplateSample(null);
         return;
     }
     const exists = templates.some((item) => item.id === state.templateId);
@@ -485,6 +500,7 @@ async function loadTemplate(id, {applyDefaults} = {applyDefaults: false}) {
         currentTemplate = null;
         elements.templateDescription.textContent = 'Выберите шаблон, чтобы увидеть предпросмотр.';
         elements.activeTemplateStyle.textContent = '';
+        updateTemplateSample(null);
         renderPreview();
         renderParticipants();
         return;
@@ -500,6 +516,7 @@ async function loadTemplate(id, {applyDefaults} = {applyDefaults: false}) {
     }
     elements.templateDescription.textContent = template.description || 'Шаблон без описания.';
     applyTemplateStyles(template.styles);
+    updateTemplateSample(template);
     if (applyDefaults) {
         applyTemplateDefaults(template);
     }
@@ -510,6 +527,138 @@ async function loadTemplate(id, {applyDefaults} = {applyDefaults: false}) {
 
 function applyTemplateStyles(styles) {
     elements.activeTemplateStyle.textContent = styles || '';
+}
+
+function updateTemplateSample(template) {
+    if (!elements.templateSample) {
+        return;
+    }
+    if (!template) {
+        elements.templateSample.textContent = '[]';
+        return;
+    }
+    const sampleObject = buildTemplateSample(template);
+    if (!sampleObject || Object.keys(sampleObject).length === 0) {
+        elements.templateSample.textContent = '[]';
+        return;
+    }
+    elements.templateSample.textContent = JSON.stringify([sampleObject], null, 2);
+}
+
+function buildTemplateSample(template) {
+    const fields = Array.isArray(template.fields) ? template.fields : [];
+    const participants = state.participants || [];
+    const base = participants.length > 0 ? {...participants[0].values} : {};
+
+    if (fields.length === 0) {
+        return Object.keys(base).length > 0 ? base : null;
+    }
+
+    const sample = {};
+    fields.forEach((field, index) => {
+        const key = field.id || `field_${index}`;
+        let value = base[key];
+        if (value === undefined || value === null || value === '') {
+            value = exampleValueForField(field, index);
+        }
+        sample[key] = value;
+    });
+
+    return sample;
+}
+
+function exampleValueForField(field, index) {
+    const key = (field.id || '').toLowerCase();
+    const label = (field.label || '').toLowerCase();
+    const source = key || label;
+
+    if (source.includes('lastname') || source.includes('surname') || source.includes('фам')) {
+        return 'Иванов';
+    }
+    if (source.includes('firstname') || source.includes('given') || source.includes('имя')) {
+        return 'Иван';
+    }
+    if (source.includes('middlename') || source.includes('отч')) {
+        return 'Иванович';
+    }
+    if (source.includes('company') || source.includes('org') || source.includes('компан')) {
+        return 'Компания «Пример»';
+    }
+    if (source.includes('role') || source.includes('роль')) {
+        return 'member';
+    }
+    if (source.includes('nameorder')) {
+        return 'eastern';
+    }
+    if (source.includes('city') || source.includes('город')) {
+        return 'Москва';
+    }
+    if (source.includes('tagline') || source.includes('track')) {
+        return 'Main Stage';
+    }
+    if (source.includes('job') || source.includes('position') || source.includes('должн')) {
+        return 'Инженер-исследователь';
+    }
+    if (source.includes('email')) {
+        return 'example@example.com';
+    }
+    if (source.includes('phone')) {
+        return '+7 (900) 000-00-00';
+    }
+    const baseValue = field.placeholder || field.label;
+    if (baseValue) {
+        return baseValue;
+    }
+    return `value_${index + 1}`;
+}
+
+function buildTemplateContext(template, values) {
+    const context = deepClone(values || {});
+    const defaults = template?.defaultSettings || {};
+    const nameOrder = String(context.nameOrder || defaults.nameOrder || 'western').toLowerCase();
+
+    let explicitName = typeof context.name === 'string' ? context.name.trim() : '';
+    const tokens = explicitName ? explicitName.split(/\s+/) : [];
+
+    let firstName = context.firstName && String(context.firstName).trim();
+    let lastName = context.lastName && String(context.lastName).trim();
+    let middleName = context.middleName && String(context.middleName).trim();
+
+    if (!firstName || !lastName) {
+        if (nameOrder === 'western') {
+            if (tokens.length === 1) {
+                firstName = firstName || tokens[0];
+            } else if (tokens.length >= 2) {
+                firstName = firstName || tokens[0];
+                lastName = lastName || tokens[tokens.length - 1];
+                if (!middleName && tokens.length > 2) {
+                    middleName = tokens.slice(1, -1).join(' ');
+                }
+            }
+        } else {
+            if (tokens.length === 1) {
+                lastName = lastName || tokens[0];
+            } else if (tokens.length >= 2) {
+                lastName = lastName || tokens[0];
+                firstName = firstName || tokens[1];
+                if (!middleName && tokens.length > 2) {
+                    middleName = tokens.slice(2).join(' ');
+                }
+            }
+        }
+    }
+
+    if (!explicitName) {
+        explicitName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
+    }
+
+    context.name = explicitName;
+    context.displayFirstName = firstName || '';
+    context.displayLastName = lastName || '';
+    context.displayMiddleName = middleName || '';
+    context.displayName = explicitName;
+
+    return context;
 }
 
 function applyTemplateDefaults(template) {
@@ -732,7 +881,8 @@ function renderPreviewPage(items, index, layout) {
         const badgeWrapper = document.createElement('div');
         badgeWrapper.className = 'badge-item';
         badgeWrapper.dataset.participantId = participant.id;
-        const markup = renderTemplateString(currentTemplate.markup, participant.values);
+        const context = buildTemplateContext(currentTemplate, participant.values);
+        const markup = renderTemplateString(currentTemplate.markup, context);
         badgeWrapper.innerHTML = markup;
 
         const controls = document.createElement('div');
@@ -1142,7 +1292,8 @@ function submitTemplateForm() {
     };
 
     let newId = editingTemplateId;
-    if (templateDialogMode === 'edit' && editingTemplateId) {
+    const isEditingExisting = templateDialogMode === 'edit' && editingTemplateId;
+    if (isEditingExisting) {
         templateManager.updateCustom(editingTemplateId, templateData);
         newId = editingTemplateId;
     } else {
@@ -1150,7 +1301,11 @@ function submitTemplateForm() {
     }
 
     populateTemplateSelect();
-    state.setTemplate(newId);
+    if (isEditingExisting) {
+        state.setTemplate(newId, {force: true});
+    } else {
+        state.setTemplate(newId);
+    }
     elements.templateEditorDialog.close();
 }
 

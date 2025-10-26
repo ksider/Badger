@@ -35,6 +35,11 @@
                         <select id="templateSelect"></select>
                     </label>
                     <p class="template-description" id="templateDescription"></p>
+                    <div class="template-sample">
+                        <div class="template-sample__header">Пример JSON для импорта</div>
+                        <pre id="templateSample" class="template-sample__code">[]</pre>
+                        <p class="template-sample__note">Структура формируется по выбранному шаблону. Если есть участники, используется их первый элемент.</p>
+                    </div>
                     <div class="panel-actions">
                         <button id="customizeTemplateButton" class="ghost">Настроить шаблон</button>
                     </div>
@@ -235,6 +240,7 @@
 
 <script src="assets/js/utils.js"></script>
 <script src="assets/js/template-presets.js"></script>
+<script src="assets/js/templates.js"></script>
 <script src="assets/js/storage.js"></script>
 <script src="assets/js/template-manager.js"></script>
 <script src="assets/js/state.js"></script>

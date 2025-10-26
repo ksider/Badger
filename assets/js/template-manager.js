@@ -1,6 +1,7 @@
 (function (global) {
     const {deepClone, createId} = global.BadgeUtils;
-    const PRESET_TEMPLATES = global.BadgeTemplatePresets || [];
+const PRESET_TEMPLATES = global.BadgeTemplatePresets || [];
+const MANIFEST_TEMPLATES = global.BadgeTemplateManifest || [];
     const CUSTOM_TEMPLATES_KEY = 'customTemplates';
 
     class TemplateManager {
@@ -14,15 +15,21 @@
         async load(indexPath = 'templates/index.json') {
             await this._loadFromManifest(indexPath);
             if (this.builtIn.size === 0) {
+                this._loadFromManifestArray(MANIFEST_TEMPLATES);
+            }
+            if (this.builtIn.size === 0) {
                 this._loadFromPresets();
             }
             this._loadCustom();
             this.loaded = true;
         }
 
-        async _loadFromManifest(indexPath) {
-            try {
-                const response = await fetch(indexPath);
+    async _loadFromManifest(indexPath) {
+        if (window.location.protocol === 'file:') {
+            return;
+        }
+        try {
+            const response = await fetch(indexPath, {cache: 'no-store'});
                 if (!response.ok) {
                     console.warn(`TemplateManager: не удалось получить ${indexPath}: ${response.status}`);
                     return;
@@ -41,10 +48,26 @@
                     });
                     this.builtIn.set(template.id, template);
                 });
-            } catch (error) {
-                console.warn('TemplateManager: ошибка при загрузке списка шаблонов', error);
-            }
+        } catch (error) {
+            console.warn('TemplateManager: ошибка при загрузке списка шаблонов', error);
         }
+    }
+
+    _loadFromManifestArray(list) {
+        if (!Array.isArray(list)) {
+            return;
+        }
+        list.forEach((item) => {
+            if (!item || !item.id || this.builtIn.has(item.id)) {
+                return;
+            }
+            const template = normalizeTemplate({
+                ...item,
+                builtIn: true,
+            });
+            this.builtIn.set(template.id, template);
+        });
+    }
 
         _loadFromPresets() {
             PRESET_TEMPLATES.forEach((item) => {
@@ -96,6 +119,9 @@
         }
 
         async _fetchText(path) {
+            if (window.location.protocol === 'file:' && !/^https?:/i.test(path)) {
+                return '';
+            }
             try {
                 const response = await fetch(path);
                 if (!response.ok) {
